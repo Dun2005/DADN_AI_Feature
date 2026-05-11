@@ -70,6 +70,7 @@ class FaceRecognizer:
         # Trạng thái theo dõi người lạ (REQ-09)
         self._stranger_first_seen: float = None  # Thời điểm phát hiện lần đầu
         self._stranger_alerted = False           # Đã gửi cảnh báo chưa?
+        self._last_face_seen_time: float = 0     # Debounce time cho mất dấu khuôn mặt
 
         # Trạng thái cửa (chống spam lệnh mở cửa)
         self._door_last_opened: float = 0
@@ -81,6 +82,7 @@ class FaceRecognizer:
 
         # Tham chiếu đến VideoCapture để WebApp dùng lại stream
         self._cap: cv2.VideoCapture = None
+        self.latest_frame = None
 
     # ------------------------------------------------------------------
     # Load model
@@ -169,6 +171,8 @@ class FaceRecognizer:
                 logger.warning("[FaceAI] Không đọc được frame, bỏ qua...")
                 time.sleep(0.1)
                 continue
+                
+            self.latest_frame = frame.copy()
 
             # ── Frame-skip: chỉ xử lý nhận diện mỗi FRAME_SKIP frame ──
             self._frame_counter += 1
@@ -182,19 +186,21 @@ class FaceRecognizer:
             # Equalize histogram để cải thiện nhận diện trong điều kiện ánh sáng yếu
             gray = cv2.equalizeHist(gray)
 
-            # --- Phát hiện khuôn mặt (minSize nhỏ hơn vì frame 320×240) ---
+            # --- Phát hiện khuôn mặt ---
             faces = self._face_cascade.detectMultiScale(
                 gray,
                 scaleFactor=1.1,
                 minNeighbors=4,
-                minSize=(50, 50),
+                minSize=(30, 30),
                 flags=cv2.CASCADE_SCALE_IMAGE,
             )
 
             if len(faces) == 0:
-                # Không có khuôn mặt → reset bộ đếm người lạ
-                self._reset_stranger_timer()
+                # Không có khuôn mặt → chờ 4 giây mới reset bộ đếm người lạ để tránh lag (debounce)
+                if time.time() - self._last_face_seen_time > 4.0:
+                    self._reset_stranger_timer()
             else:
+                self._last_face_seen_time = time.time()
                 for (x, y, w, h) in faces:
                     face_roi = gray[y:y + h, x:x + w]
                     face_roi = cv2.resize(face_roi, (100, 100))  # Nhỏ hơn → nhanh hơn
@@ -222,6 +228,7 @@ class FaceRecognizer:
                     else:
                         self._handle_stranger(frame, x, y, w, h)
 
+            self.latest_frame = frame.copy()
             # ── Tăng sleep để giảm CPU usage (~5 FPS thực tế) ──
             time.sleep(0.2)
 

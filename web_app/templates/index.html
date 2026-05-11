@@ -3,153 +3,323 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YoloHome Dashboard</title>
+  <title>YoloHome AI</title>
   <link rel="stylesheet" href="/static/css/style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <!-- ───────── HEADER ───────── -->
-  <header class="header">
-    <div class="header-left">
-      <i class="fas fa-house-signal"></i>
-      <span class="brand">YoloHome</span>
+  <!-- ───────── SIDEBAR ───────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="fas fa-microchip text-cyan"></i>
+      YoloHome
     </div>
-    <div class="header-right">
-      <a href="/members" class="nav-link"><i class="fas fa-users"></i> Thành viên</a>
-      <span id="clock" class="clock">--:--:--</span>
-      <span id="conn-badge" class="badge badge-connecting">
-        <i class="fas fa-circle"></i> Đang kết nối…
-      </span>
-      <a href="/logout" class="nav-link" style="color:var(--text-dim)"><i class="fas fa-right-from-bracket"></i></a>
+    <nav class="nav-menu">
+      <a class="nav-item active" onclick="switchView('dashboard')">
+        <i class="fas fa-border-all"></i> Tổng quan
+      </a>
+      <a class="nav-item" onclick="switchView('rules')">
+        <i class="fas fa-bolt"></i> Tự động hoá
+      </a>
+      <a class="nav-item" onclick="switchView('security')">
+        <i class="fas fa-shield-halved"></i> An ninh & AI
+      </a>
+      <a class="nav-item" onclick="switchView('analytics')">
+        <i class="fas fa-chart-pie"></i> Thống kê
+      </a>
+    </nav>
+    <div style="margin-top:auto">
+      <div class="glass-card" style="padding:16px;text-align:center;font-size:0.85rem">
+        <div id="conn-badge" style="color:var(--accent-green);font-weight:600;margin-bottom:8px">
+          <i class="fas fa-circle dot" style="display:inline-block;margin-right:4px"></i> Đã kết nối
+        </div>
+        <div style="color:var(--text-dim)" id="clock">--:--:--</div>
+      </div>
+      <a href="/logout" class="nav-item mt-4" style="color:var(--accent-red)">
+        <i class="fas fa-right-from-bracket"></i> Đăng xuất
+      </a>
     </div>
-  </header>
+  </aside>
 
-  <!-- ───────── MAIN GRID ───────── -->
-  <main class="grid">
-
-    <!-- ── Hàng 1: Sensor Cards ── -->
-    <section class="card sensor-card" id="card-temp">
-      <div class="card-icon"><i class="fas fa-thermometer-half"></i></div>
-      <div class="card-body">
-        <p class="card-label">Nhiệt độ</p>
-        <p class="card-value" id="val-temp">--</p>
-        <p class="card-unit">°C</p>
+  <!-- ───────── MAIN CONTENT ───────── -->
+  <main class="main-content">
+    
+    <!-- === VIEW: DASHBOARD === -->
+    <div id="view-dashboard" class="view-section active">
+      <div class="top-header">
+        <h1 class="view-title">Chào mừng về nhà 👋</h1>
       </div>
-      <div class="card-bar-wrap"><div class="card-bar" id="bar-temp"></div></div>
-    </section>
 
-    <section class="card sensor-card" id="card-humi">
-      <div class="card-icon"><i class="fas fa-droplet"></i></div>
-      <div class="card-body">
-        <p class="card-label">Độ ẩm</p>
-        <p class="card-value" id="val-humi">--</p>
-        <p class="card-unit">%</p>
-      </div>
-      <div class="card-bar-wrap"><div class="card-bar" id="bar-humi"></div></div>
-    </section>
-
-    <section class="card sensor-card" id="card-gas">
-      <div class="card-icon"><i class="fas fa-wind"></i></div>
-      <div class="card-body">
-        <p class="card-label">Khí gas</p>
-        <p class="card-value" id="val-gas">--</p>
-        <p class="card-unit">ppm</p>
-      </div>
-      <div class="card-bar-wrap"><div class="card-bar" id="bar-gas"></div></div>
-    </section>
-
-    <!-- ── Hàng 2: Điều khiển thiết bị ── -->
-    <section class="card control-card">
-      <h2 class="card-title"><i class="fas fa-sliders"></i> Điều khiển</h2>
-      <div class="control-grid">
-
-        <div class="ctrl-item">
-          <label>Đèn LED</label>
-          <label class="toggle">
-            <input type="checkbox" id="sw-led" onchange="sendControl('led', this.checked?1:0)" />
-            <span class="slider"></span>
-          </label>
-          <span class="ctrl-state" id="st-led">Tắt</span>
+      <div class="grid-dashboard">
+        <!-- Sensor Cards -->
+        <div class="glass-card sensor-card" style="grid-column:span 4">
+          <div class="sensor-top">
+            <span class="card-title" style="margin:0">Nhiệt độ</span>
+            <div class="sensor-icon icon-temp"><i class="fas fa-temperature-half"></i></div>
+          </div>
+          <div class="sensor-value"><span id="val-temp">--</span><span class="sensor-unit">°C</span></div>
+        </div>
+        <div class="glass-card sensor-card" style="grid-column:span 4">
+          <div class="sensor-top">
+            <span class="card-title" style="margin:0">Độ ẩm</span>
+            <div class="sensor-icon icon-humi"><i class="fas fa-droplet"></i></div>
+          </div>
+          <div class="sensor-value"><span id="val-humi">--</span><span class="sensor-unit">%</span></div>
+        </div>
+        <div class="glass-card sensor-card" style="grid-column:span 4">
+          <div class="sensor-top">
+            <span class="card-title" style="margin:0">Khí Gas</span>
+            <div class="sensor-icon icon-gas"><i class="fas fa-wind"></i></div>
+          </div>
+          <div class="sensor-value"><span id="val-gas">--</span><span class="sensor-unit">ppm</span></div>
         </div>
 
-        <div class="ctrl-item">
-          <label>Quạt</label>
-          <label class="toggle">
-            <input type="checkbox" id="sw-fan" onchange="sendControl('fan', this.checked?1:0)" />
-            <span class="slider"></span>
-          </label>
-          <span class="ctrl-state" id="st-fan">Tắt</span>
+        <!-- Camera Feed -->
+        <div class="glass-card" style="grid-column:span 7">
+          <h2 class="card-title"><i class="fas fa-camera text-cyan"></i> Camera AI Theo dõi</h2>
+          <div class="camera-container">
+            <img id="cam-feed" src="/video_feed" onerror="this.src='/static/img/no_camera.svg'" alt="Camera stream" />
+            <div class="cam-overlay">
+              <div class="dot"></div> <span id="face-status">Đang giám sát</span>
+            </div>
+          </div>
         </div>
 
-        <div class="ctrl-item">
-          <label>Cửa (Servo)</label>
-          <label class="toggle">
-            <input type="checkbox" id="sw-door" onchange="sendControl('door', this.checked?90:0)" />
-            <span class="slider"></span>
-          </label>
-          <span class="ctrl-state" id="st-door">Đóng</span>
+        <!-- Controls -->
+        <div class="glass-card" style="grid-column:span 5">
+          <h2 class="card-title"><i class="fas fa-sliders text-purple"></i> Điều khiển thiết bị</h2>
+          <div class="control-grid">
+            <div class="device-item" id="ctrl-led">
+              <div class="device-info">
+                <i class="fas fa-lightbulb device-icon"></i>
+                <div>
+                  <div style="font-weight:600">Đèn LED</div>
+                  <div style="font-size:0.8rem;color:var(--text-dim)" id="st-led">Tắt</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="sw-led" onchange="sendControl('led', this.checked?1:0)" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="device-item" id="ctrl-fan">
+              <div class="device-info">
+                <i class="fas fa-fan device-icon"></i>
+                <div>
+                  <div style="font-weight:600">Quạt</div>
+                  <div style="font-size:0.8rem;color:var(--text-dim)" id="st-fan">Tắt</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="sw-fan" onchange="sendControl('fan', this.checked?1:0)" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="device-item" id="ctrl-door">
+              <div class="device-info">
+                <i class="fas fa-door-open device-icon"></i>
+                <div>
+                  <div style="font-weight:600">Cửa</div>
+                  <div style="font-size:0.8rem;color:var(--text-dim)" id="st-door">Đóng</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="sw-door" onchange="sendControl('door', this.checked?90:0)" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="device-item" id="ctrl-pump">
+              <div class="device-info">
+                <i class="fas fa-water device-icon"></i>
+                <div>
+                  <div style="font-weight:600">Máy bơm</div>
+                  <div style="font-size:0.8rem;color:var(--text-dim)" id="st-pump">Tắt</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="sw-pump" onchange="sendControl('pump', this.checked?1:0)" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Voice Assistant -->
+          <div class="mt-4" style="background:rgba(0,0,0,0.2);padding:16px;border-radius:12px;border:1px solid var(--glass-border)">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-microphone-lines text-cyan" style="font-size:1.5rem"></i>
+                <div>
+                  <div style="font-weight:600">Trợ lý ảo Yolo</div>
+                  <div style="font-size:0.8rem;color:var(--text-dim)">Nói "Yolo" để ra lệnh</div>
+                </div>
+              </div>
+              <div class="dot" style="background:var(--accent-blue)"></div>
+            </div>
+            <div id="chat-messages" style="height:100px;overflow-y:auto;font-size:0.9rem;display:flex;flex-direction:column;gap:8px">
+              <!-- Tin nhắn voice ở đây -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === VIEW: AUTOMATION RULES === -->
+    <div id="view-rules" class="view-section">
+      <div class="top-header">
+        <h1 class="view-title">Tự động hoá ⚙️</h1>
+        <button class="btn btn-primary" onclick="showRuleModal()">
+          <i class="fas fa-plus"></i> Tạo kịch bản mới
+        </button>
+      </div>
+
+      <div class="glass-card">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Tên Kịch Bản</th>
+                <th>Điều Kiện</th>
+                <th>Hành Động</th>
+                <th>Thông Báo</th>
+                <th>Trạng Thái</th>
+                <th>Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody">
+              <!-- Load bằng JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- === VIEW: SECURITY & AI === -->
+    <div id="view-security" class="view-section">
+      <div class="top-header">
+        <h1 class="view-title">An ninh & Khuôn mặt 🛡️</h1>
+      </div>
+      
+      <div class="grid-dashboard">
+        <div class="glass-card" style="grid-column:span 6">
+          <h2 class="card-title"><i class="fas fa-user-plus text-cyan"></i> Đăng ký thành viên</h2>
+          <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:20px">Hệ thống sẽ lấy mẫu khuôn mặt từ camera để huấn luyện AI nhận diện.</p>
+          
+          <div class="flex gap-3 items-center mb-4">
+            <div class="form-group" style="flex:1;margin:0">
+              <input type="text" id="inp-name" class="form-control" placeholder="Tên thành viên (VD: Cong)">
+            </div>
+            <div class="form-group" style="width:100px;margin:0">
+              <input type="number" id="inp-samples" class="form-control" value="30" min="10" max="80">
+            </div>
+          </div>
+          
+          <div class="flex gap-3">
+            <button class="btn btn-primary" onclick="startEnroll()" id="btn-enroll">
+              <i class="fas fa-camera"></i> Bắt đầu quét
+            </button>
+            <button class="btn" style="background:var(--accent-purple);color:white" onclick="trainModel()" id="btn-train">
+              <i class="fas fa-brain"></i> Huấn luyện AI
+            </button>
+          </div>
+          <div id="enroll-status" class="mt-4" style="font-size:0.9rem;color:var(--text-dim)"></div>
         </div>
 
-        <div class="ctrl-item">
-          <label>Máy bơm</label>
-          <label class="toggle">
-            <input type="checkbox" id="sw-pump" onchange="sendControl('pump', this.checked?1:0)" />
-            <span class="slider"></span>
-          </label>
-          <span class="ctrl-state" id="st-pump">Tắt</span>
+        <div class="glass-card" style="grid-column:span 6">
+          <h2 class="card-title"><i class="fas fa-users text-purple"></i> Danh sách nhận diện</h2>
+          <div id="members-list" style="display:flex;flex-direction:column;gap:12px">
+            <!-- Load bằng JS -->
+          </div>
         </div>
 
+        <div class="glass-card" style="grid-column:span 12">
+          <h2 class="card-title"><i class="fas fa-clock-rotate-left"></i> Nhật ký ra vào</h2>
+          <div id="face-log-list" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+            <!-- Load bằng JS -->
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <!-- ── Hàng 2: Camera FaceAI ── -->
-    <section class="card camera-card">
-      <h2 class="card-title"><i class="fas fa-camera"></i> Camera FaceAI</h2>
-      <div class="camera-wrap">
-        <img id="cam-feed" src="/video_feed" alt="Camera stream"
-             onerror="this.src='/static/img/no_camera.svg'" />
+    <!-- === VIEW: ANALYTICS === -->
+    <div id="view-analytics" class="view-section">
+      <div class="top-header">
+        <h1 class="view-title">Thống kê dữ liệu 📈</h1>
       </div>
-      <div id="face-status" class="face-status">Chờ nhận diện…</div>
-    </section>
-
-    <!-- ── Hàng 3: Voice Chat ── -->
-    <section class="card chat-card">
-      <h2 class="card-title"><i class="fas fa-microphone"></i> Trợ lý giọng nói</h2>
-      <div id="chat-messages" class="chat-messages"></div>
-      <div class="chat-footer">
-        <span class="chat-hint">Nói "<strong>Yolo</strong>" để kích hoạt</span>
-        <span id="voice-indicator" class="voice-indicator">
-          <i class="fas fa-circle-dot"></i>
-        </span>
+      <div class="glass-card mb-4">
+        <h2 class="card-title"><i class="fas fa-chart-area text-cyan"></i> Biểu đồ Môi trường (24h)</h2>
+        <canvas id="chart-sensor" height="80"></canvas>
       </div>
-    </section>
-
-    <!-- ── Hàng 3: Log nhận diện ── -->
-    <section class="card log-card">
-      <h2 class="card-title"><i class="fas fa-clock-rotate-left"></i> Log nhận diện</h2>
-      <div id="face-log-list" class="log-list"></div>
-    </section>
-
-    <!-- ── Hàng 4: Biểu đồ lịch sử cảm biến ── -->
-    <section class="card" style="grid-column:span 2">
-      <h2 class="card-title"><i class="fas fa-chart-line"></i> Biểu đồ 24 giờ (Nhiệt độ / Độ ẩm)</h2>
-      <canvas id="chart-sensor" height="80"></canvas>
-    </section>
-
-    <!-- ── Hàng 4: Báo cáo điện năng ── -->
-    <section class="card" style="grid-column:span 1">
-      <h2 class="card-title"><i class="fas fa-bolt"></i> Điện năng tiêu thụ (24h)</h2>
-      <div id="energy-report" class="energy-grid"></div>
-    </section>
+      <div class="glass-card">
+        <h2 class="card-title"><i class="fas fa-bolt text-orange"></i> Điện năng tiêu thụ</h2>
+        <div id="energy-report" class="control-grid"></div>
+      </div>
+    </div>
 
   </main>
 
-  <!-- ───────── FOOTER ───────── -->
-  <footer class="footer">
-    YoloHome · IoT+AI Gateway · 2025
-  </footer>
+  <!-- ───────── MODAL THÊM RULE ───────── -->
+  <div class="modal-backdrop" id="modal-rule">
+    <div class="modal glass-card">
+      <h2 class="card-title" style="color:var(--text-main);font-size:1.4rem">Thêm Kịch Bản Mới</h2>
+      <div class="form-group">
+        <label>Tên kịch bản</label>
+        <input type="text" id="rule-name" class="form-control" placeholder="VD: Bật quạt khi trời nóng">
+      </div>
+      <div class="flex gap-3">
+        <div class="form-group" style="flex:1">
+          <label>Cảm biến</label>
+          <select id="rule-sensor" class="form-control">
+            <option value="temp">Nhiệt độ</option>
+            <option value="humi">Độ ẩm</option>
+            <option value="gas">Khí Gas</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>Phép so sánh</label>
+          <select id="rule-op" class="form-control">
+            <option value=">">Lớn hơn (>)</option>
+            <option value="<">Nhỏ hơn (<)</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>Ngưỡng</label>
+          <input type="number" id="rule-val" class="form-control" value="30">
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="form-group" style="flex:1">
+          <label>Thiết bị</label>
+          <select id="rule-device" class="form-control">
+            <option value="led">Đèn LED</option>
+            <option value="fan">Quạt</option>
+            <option value="pump">Máy bơm</option>
+            <option value="door">Cửa</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>Hành động</label>
+          <select id="rule-action" class="form-control">
+            <option value="1">BẬT / ĐÓNG</option>
+            <option value="0">TẮT / MỞ</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mt-4">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="rule-notify">
+          <span style="color:white;font-size:1rem">Gửi thông báo Telegram</span>
+        </label>
+      </div>
+      <div class="flex justify-between mt-4 pt-4" style="border-top:1px solid var(--glass-border)">
+        <button class="btn" style="background:rgba(255,255,255,0.1);color:white" onclick="hideRuleModal()">Huỷ</button>
+        <button class="btn btn-primary" onclick="saveRule()">Lưu kịch bản</button>
+      </div>
+    </div>
+  </div>
 
   <script src="/static/js/dashboard.js"></script>
 </body>

@@ -630,34 +630,44 @@ async def toggle_rule(rule_id: int, _=Depends(require_auth)):
                      "Dùng trong thẻ `<img src='/video_feed'>` trên Dashboard.")
 async def video_feed():
     def generate():
-        # Lấy frame từ FaceRecognizer nếu có, không thì mở camera trực tiếp
         cap = None
+        own_cap = False
         try:
-            if _face_recognizer is not None and hasattr(_face_recognizer, "_cap"):
-                cap = _face_recognizer._cap
-            else:
-                cap = cv2.VideoCapture(0)
+            # Nếu FaceAI không chạy, web tự mở camera
+            if _face_recognizer is None or not getattr(_face_recognizer, "_running", False):
+                import os
+                if os.name == 'nt':
+                    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                else:
+                    cap = cv2.VideoCapture(0)
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-
-            own_cap = (_face_recognizer is None or not hasattr(_face_recognizer, "_cap"))
+                own_cap = True
 
             while True:
-                if cap is None or not cap.isOpened():
-                    break
-                ret, frame = cap.read()
-                if not ret:
-                    break
+                if not own_cap:
+                    # Dùng frame đã được FaceAI xử lý (đã vẽ bounding box)
+                    frame = getattr(_face_recognizer, "latest_frame", None)
+                    if frame is None:
+                        time.sleep(0.1)
+                        continue
+                else:
+                    if cap is None or not cap.isOpened():
+                        break
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                
                 frame_small = cv2.resize(frame, (320, 240))
                 _, jpeg = cv2.imencode(".jpg", frame_small, [cv2.IMWRITE_JPEG_QUALITY, 70])
                 yield (
                     b"--frame\r\n"
                     b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n"
                 )
-                time.sleep(0.1)  # ~10 FPS
+                time.sleep(0.05)  # ~20 FPS stream
 
         finally:
-            if cap is not None and own_cap:
+            if own_cap and cap is not None:
                 cap.release()
 
     return StreamingResponse(

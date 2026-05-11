@@ -1,0 +1,31 @@
+services:
+  yolohome:
+    build: .
+    container_name: yolohome_gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - ./data:/app/data
+    env_file:
+      - .env
+    # NOTE: To access hardware inside Docker, you need to map the devices.
+    # Since you are on Windows, accessing COM ports and webcams inside Docker (WSL2)
+    # requires using `usbipd-win`. 
+    # If you only want to run the simulation, you can change the command below.
+    # devices:
+    #   # Uncomment and adjust these if you use Linux or usbipd-win:
+    #   # - "/dev/video0:/dev/video0"      # Webcam
+    #   # - "/dev/snd:/dev/snd"            # Audio (Microphone/Speaker)
+    #   # - "/dev/ttyUSB0:/dev/ttyUSB0"    # Serial Port (Yolo:Bit)
+    group_add:
+      - dialout
+      - audio
+      - video
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Command to run in Simulation mode by default so it doesn't crash without hardware attached
+    # Change to ["python", "main.py"] if you successfully pass hardware to the container.
+    command: ["python", "main.py", "--sim"]
